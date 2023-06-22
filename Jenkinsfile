@@ -1,12 +1,9 @@
 pipeline {
     agent {
-        // docker {
-        //     image 'node:18-alpine'
-        //     label 'node=inbound-agent-node01'
-        //     args '-p 3000-3100:3000 -p 5000-5100:5000' 
-        // }
-        node {
+        docker {
+            image 'node:18-alpine'
             label 'node=inbound-agent-node01'
+            args '-p 3000-3100:3000 -p 5000-5100:5000' 
         }
     }
     environment {
@@ -26,10 +23,12 @@ pipeline {
             }
         }
         stage('Deliver for development') {
-            agent { 
-                node {
+            agent {
+                docker {
+                    image 'node:18-alpine'
                     label 'node=hkdev-agent-node01'
-                } 
+                    args '-p 3000-3100:3000 -p 5000-5100:5000' 
+                }
             }
             when {
                 beforeAgent true
@@ -45,9 +44,11 @@ pipeline {
         }
         stage('Deploy for staging') {
             agent { 
-                node {
+                docker {
+                    image 'node:18-alpine'
                     label 'node=Flashwire-staging-agent'
-                } 
+                    args '-p 3000-3100:3000 -p 5000-5100:5000' 
+                }
             }
             when {
                 beforeAgent true
