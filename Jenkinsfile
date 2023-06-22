@@ -33,6 +33,8 @@ pipeline {
                 branch 'development'
             }
             steps {
+                sh "echo ${WORKSPACE}"
+                sh 'npm install'
                 sh './jenkins/scripts/deliver-for-development.sh'
                 input message: 'Finished using the web site? (Click "Proceed" to continue)'
                 sh './jenkins/scripts/kill.sh'
@@ -49,6 +51,8 @@ pipeline {
                 branch 'production'
             }
             steps {
+                sh "echo ${WORKSPACE}"
+                sh 'npm install'
                 sh './jenkins/scripts/deploy-for-production.sh'
                 input message: 'Finished using the web site? (Click "Proceed" to continue)'
                 sh './jenkins/scripts/kill.sh'
