@@ -22,6 +22,11 @@ pipeline {
             }
         }
         stage('Deliver for development') {
+            agent { 
+                node {
+                    label: 'node=hkdev-agent-node01' || 'node=inbound-agent-node01'
+                } 
+            }
             when {
                 branch 'development'
             }
@@ -31,7 +36,12 @@ pipeline {
                 sh './jenkins/scripts/kill.sh'
             }
         }
-        stage('Deploy for production') {
+        stage('Deploy for staging') {
+            agent { 
+                node {
+                    label: 'node=Flashwire-staging-agent'
+                } 
+            }
             when {
                 branch 'production'
             }
