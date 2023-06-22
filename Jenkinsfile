@@ -29,6 +29,7 @@ pipeline {
                 } 
             }
             when {
+                beforeAgent true
                 branch 'development'
             }
             steps {
@@ -44,6 +45,7 @@ pipeline {
                 } 
             }
             when {
+                beforeAgent true
                 branch 'production'
             }
             steps {
