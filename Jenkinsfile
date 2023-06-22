@@ -25,7 +25,7 @@ pipeline {
         stage('Deliver for development') {
             agent { 
                 node {
-                    label: 'node=hkdev-agent-node01'
+                    label 'node=hkdev-agent-node01'
                 } 
             }
             when {
@@ -40,7 +40,7 @@ pipeline {
         stage('Deploy for staging') {
             agent { 
                 node {
-                    label: 'node=Flashwire-staging-agent'
+                    label 'node=Flashwire-staging-agent'
                 } 
             }
             when {
