@@ -63,7 +63,7 @@ pipeline {
         stage('Get image') {
             agent {
                 node {
-                    label 'node=Flashwire-staging-agent' || 'node=hkdev-agent-node01'
+                    label 'node=Flashwire-staging-agent || node=hkdev-agent-node01'
                 }
             }
             when {
