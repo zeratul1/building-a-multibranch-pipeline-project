@@ -69,7 +69,7 @@ pipeline {
             when {
                 branch 'production'
                 expression {
-                    NODE == NODE_NAME
+                    return NODE == NODE_NAME
                 }
             }
             input {
