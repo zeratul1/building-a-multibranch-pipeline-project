@@ -60,17 +60,31 @@ pipeline {
                 sh './jenkins/scripts/kill.sh'
             }
         }
-        stage('Get image for staging') {
+        stage('Get image') {
             agent {
                 node {
-                    label 'node=Flashwire-staging-agent'
+                    label 'node=Flashwire-staging-agent' || 'node=hkdev-agent-node01'
                 }
             }
             when {
-                beforeAgent true
                 branch 'production'
+                expression {
+                    NODE == NODE_NAME
+                }
+            }
+            input {
+                message "Should we continue?"
+                ok "Yes, we should."
+                parameters {
+                    string(
+                        name: 'NODE', 
+                        defaultValue: 'hkdev-agent-node01', 
+                        description: 'Which node should I work on?'
+                    )
+                }
             }
             steps {
+                echo "Hello, ${NODE}. [${NODE_NAME}]"
                 withCredentials([[
                     $class: 'AmazonWebServicesCredentialsBinding',
                     credentialsId: "$ECR_READ_CREDENTIAL_ID",
