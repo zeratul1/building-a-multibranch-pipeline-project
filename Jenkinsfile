@@ -60,6 +60,31 @@ pipeline {
                 sh './jenkins/scripts/kill.sh'
             }
         }
+        stage('Get image for staging') {
+            agent {
+                node {
+                    label 'node=Flashwire-staging-agent'
+                }
+                when {
+                    beforeAgent true
+                    branch 'production'
+                }
+                steps {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: "$ECR_READ_CREDENTIAL_ID",
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh 'aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_URL'
+                    }
+                    sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_REPO_NAME:test1"
+                    sh 'pwd && ls -alh'
+                    sh 'uname -a'
+                    sh "docker image ls |grep $FLASHWIRE_MOBILE_PROJ_NAME"
+                }
+            }
+        }
         stage('Deploy for staging') {
             agent { 
                 docker {
@@ -74,19 +99,6 @@ pipeline {
             }
             
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: "$ECR_READ_CREDENTIAL_ID",
-                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                ]]) {
-                    sh 'aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_URL'
-                }
-                sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_REPO_NAME:test1"
-                sh 'pwd && ls -alh'
-                sh 'uname -a'
-                sh "docker image ls |grep $FLASHWIRE_MOBILE_PROJ_NAME"
-
                 sh "echo ${WORKSPACE}"
                 sh 'npm install'
                 sh './jenkins/scripts/deploy-for-production.sh'
@@ -94,5 +106,6 @@ pipeline {
                 sh './jenkins/scripts/kill.sh'
             }
         }
+
     }
 }
