@@ -1,9 +1,7 @@
 pipeline {
     agent {
-        docker {
-            image 'node:18-alpine'
+        node {
             label 'node=inbound-agent-node01'
-            args '-p 3000-3100:3000 -p 5000-5100:5000' 
         }
     }
     environment {
