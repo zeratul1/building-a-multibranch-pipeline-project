@@ -1,21 +1,31 @@
 pipeline {
-    agent {
-        node {
-            label 'node=inbound-agent-node01'
-        }
-    }
+    agent none
     environment {
         CI = 'true'
         NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
     }
     stages {
         stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    label 'node=inbound-agent-node01'
+                    args '-p 3000-3100:3000 -p 5000-5100:5000' 
+                }
+            }        
             steps {
                 sh "echo ${WORKSPACE}"
                 sh 'npm install'
             }
         }
         stage('Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    label 'node=inbound-agent-node01'
+                    args '-p 3000-3100:3000 -p 5000-5100:5000' 
+                }
+            }        
             steps {
                 sh './jenkins/scripts/test.sh'
             }
