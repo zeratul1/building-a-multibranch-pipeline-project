@@ -8,7 +8,8 @@ pipeline {
         ECR_REGION = 'us-east-1'
         ECR_READ_CREDENTIAL_ID = 'aws-ecr-credentials-reading-for-frontend'
         ECR_READ_WRITE_CREDENTIAL_ID = 'aws-ecr-credentials-reading-writing-for-frontend'
-        FLASHWIRE_MOBILE_PROJ_NAME = 'flashwire-mobile'
+        FLASHWIRE_MOBILE_REPO_NAME = 'flashwire-mobile'
+        DOCKER_BUILD_TAG = "${params.image_type}-${BUILD_NUMBER}-${BRANCH_NAME}-${GIT_COMMIT}-${currentBuild.timeInMillis}"
     }
     parameters {
         booleanParam(
@@ -43,12 +44,9 @@ pipeline {
                     return params.skip_build != true
                 }
             }
-            environment {
-                DOCKER_BUILD_TAG = "${params.image_type}-${BUILD_NUMBER}-${BRANCH_NAME}-${GIT_COMMIT}-${currentBuild.timeInMillis}"
-            }
             steps {
-                sh "echo ${DOCKER_BUILD_TAG}"
-                sh "echo ${WORKSPACE}"
+                echo "${DOCKER_BUILD_TAG}"
+                echo "${WORKSPACE}"
                 sh 'npm install'
             }
         }
@@ -85,7 +83,8 @@ pipeline {
                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
-                    sh 'aws ecr list-images --region $ECR_REGION'
+                    sh 'aws ecr list-images --region $ECR_REGION --repository-name $FLASHWIRE_MOBILE_REPO_NAME'
+                    echo "${DOCKER_BUILD_TAG}"
                 }
             }
         }
@@ -123,12 +122,11 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh 'aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_URL'
-                    sh 'aws ecr list-images --region $ECR_REGION'
                 }
-                sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_PROJ_NAME:test1"
+                sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_REPO_NAME:test1"
                 sh 'pwd && ls -alh'
                 sh 'uname -a'
-                sh "docker image ls |grep $FLASHWIRE_MOBILE_PROJ_NAME"
+                sh "docker image ls |grep $FLASHWIRE_MOBILE_REPO_NAME"
             }
         }
         stage('Deliver for development') {
@@ -157,7 +155,7 @@ pipeline {
                 }
             }
             steps {
-                sh "echo ${WORKSPACE}"
+                echo "${WORKSPACE}"
                 sh 'npm install'
                 sh './jenkins/scripts/deliver-for-development.sh'
                 input message: 'Finished using the web site? (Click "Proceed" to continue)'
@@ -189,7 +187,7 @@ pipeline {
                 )
                 script {
                     if(params.continue_deploy) {
-                        sh "echo ${WORKSPACE}"
+                        echo "${WORKSPACE}"
                         sh 'npm install'
                         sh './jenkins/scripts/deploy-for-production.sh'
                         input message: 'Finished using the web site? (Click "Proceed" to continue)'
