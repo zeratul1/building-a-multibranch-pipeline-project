@@ -156,16 +156,16 @@ pipeline {
                 branch 'production'
             }
             steps {
-                input {
-                    message 'Continue to deploy?'
-                    ok 'Submit'
-                    parameters {
+                input(
+                    message: 'Continue to deploy?',
+                    ok: 'Submit',
+                    parameters: [
                         booleanParam(
                             name: 'continue_deploy', 
                             defaultValue: true
                         )
-                    }
-                }
+                    ]
+                )
                 script {
                     if(params.continue_deploy) {
                         sh "echo ${WORKSPACE}"
