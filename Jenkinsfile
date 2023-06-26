@@ -40,7 +40,7 @@ pipeline {
             }        
             when {
                 expression {
-                    return params.skip_build !== true
+                    return params.skip_build != true
                 }
             }
             environment {
@@ -62,7 +62,7 @@ pipeline {
             }        
             when {
                 expression {
-                    return params.skip_test !== true
+                    return params.skip_test != true
                 }
             }
             steps {
@@ -120,7 +120,7 @@ pipeline {
                 beforeAgent true
                 branch 'development'
                 expression {
-                    return params.continue_deploy === true
+                    return params.continue_deploy == true
                 }
             }
             input {
@@ -153,7 +153,7 @@ pipeline {
                 beforeAgent true
                 branch 'production'
                 expression {
-                    return params.continue_deploy === true
+                    return params.continue_deploy == true
                 }
             }
             input {
