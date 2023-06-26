@@ -1,3 +1,5 @@
+def buildTag = 'latest'
+
 pipeline {
     agent none
     environment {
@@ -9,7 +11,6 @@ pipeline {
         ECR_READ_CREDENTIAL_ID = 'aws-ecr-credentials-reading-for-frontend'
         ECR_READ_WRITE_CREDENTIAL_ID = 'aws-ecr-credentials-reading-writing-for-frontend'
         FLASHWIRE_MOBILE_REPO_NAME = 'flashwire-mobile'
-        DOCKER_BUILD_TAG = "${params.image_type}-${BUILD_NUMBER}-${BRANCH_NAME}-${GIT_COMMIT}-${currentBuild.timeInMillis}"
     }
     parameters {
         booleanParam(
@@ -31,6 +32,18 @@ pipeline {
         )
     }
     stages {
+        stage('Prepare') {
+            agent any
+            steps {
+                script {
+                    if(params.skip_build) {
+                        buildTag = "${params.image_type}-latest-${BRANCH_NAME}"
+                    } else {
+                        buildTag = "${params.image_type}-${BUILD_NUMBER}-${BRANCH_NAME}-${GIT_COMMIT}-${currentBuild.timeInMillis}"
+                    }
+                }
+            }
+        }
         stage('Build') {
             agent {
                 docker {
@@ -45,7 +58,7 @@ pipeline {
                 }
             }
             steps {
-                echo "${DOCKER_BUILD_TAG}"
+                echo "${buildTag}"
                 echo "${WORKSPACE}"
                 sh 'npm install'
             }
@@ -84,7 +97,7 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh 'aws ecr list-images --region $ECR_REGION --repository-name $FLASHWIRE_MOBILE_REPO_NAME'
-                    echo "${DOCKER_BUILD_TAG}"
+                    echo "${buildTag}"
                 }
             }
         }
@@ -155,6 +168,7 @@ pipeline {
                 }
             }
             steps {
+                echo "${buildTag}"
                 echo "${WORKSPACE}"
                 sh 'npm install'
                 sh './jenkins/scripts/deliver-for-development.sh'
