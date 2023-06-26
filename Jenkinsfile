@@ -85,9 +85,11 @@ pipeline {
                 message "Should we continue?"
                 ok "Yes, we should."
                 parameters {
-                    string(
+                    choice(
                         name: 'NODE', 
-                        defaultValue: 'hkdev-agent-node01', 
+                        choices: [
+                            'hkdev-agent-node01', 'Flashwire-staging-agent'
+                        ], 
                         description: 'Which node should I work on?'
                     )
                 }
@@ -125,7 +127,7 @@ pipeline {
             }
             input {
                 message 'Continue to deploy?'
-                ok 'Yes'
+                ok 'Submit'
                 parameters {
                     booleanParam(
                         name: 'continue_deploy', 
@@ -152,26 +154,28 @@ pipeline {
             when {
                 beforeAgent true
                 branch 'production'
-                expression {
-                    return params.continue_deploy == true
-                }
-            }
-            input {
-                message 'Continue to deploy?'
-                ok 'Yes'
-                parameters {
-                    booleanParam(
-                        name: 'continue_deploy', 
-                        defaultValue: true
-                    )
-                }
             }
             steps {
-                sh "echo ${WORKSPACE}"
-                sh 'npm install'
-                sh './jenkins/scripts/deploy-for-production.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                input {
+                    message 'Continue to deploy?'
+                    ok 'Submit'
+                    parameters {
+                        booleanParam(
+                            name: 'continue_deploy', 
+                            defaultValue: true
+                        )
+                    }
+                }
+                script {
+                    if(params.continue_deploy) {
+                        sh "echo ${WORKSPACE}"
+                        sh 'npm install'
+                        sh './jenkins/scripts/deploy-for-production.sh'
+                        input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                        sh './jenkins/scripts/kill.sh'
+                        return
+                    }
+                }
             }
         }
     }
