@@ -26,7 +26,7 @@ pipeline {
         choice(
             name: 'image_type', 
             choices: [
-                'development', 'staging', 'production'
+                'DEV', 'TEST', 'STAG', 'PROD'
             ], 
             description: 'choose the type of image'
         )
@@ -153,27 +153,29 @@ pipeline {
             when {
                 beforeAgent true
                 branch 'development'
-                expression {
-                    return params.continue_deploy == true
-                }
-            }
-            input {
-                message 'Continue to deploy?'
-                ok 'Submit'
-                parameters {
-                    booleanParam(
-                        name: 'continue_deploy', 
-                        defaultValue: true
-                    )
-                }
             }
             steps {
-                echo "${buildTag}"
-                echo "${WORKSPACE}"
-                sh 'npm install'
-                sh './jenkins/scripts/deliver-for-development.sh'
-                input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                sh './jenkins/scripts/kill.sh'
+                input(
+                    message: 'Continue to deploy?',
+                    ok: 'Submit',
+                    parameters: [
+                        booleanParam(
+                            name: 'continue_deploy', 
+                            defaultValue: true
+                        )
+                    ]
+                )
+                script {
+                    if(params.continue_deploy) {
+                        echo "${buildTag}"
+                        echo "${WORKSPACE}"
+                        sh 'npm install'
+                        sh './jenkins/scripts/deliver-for-development.sh'
+                        input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                        sh './jenkins/scripts/kill.sh'
+                        return
+                    }
+                }
             }
         }
         stage('Deploy for staging') {
