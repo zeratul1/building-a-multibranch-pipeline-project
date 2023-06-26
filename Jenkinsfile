@@ -103,6 +103,7 @@ pipeline {
                     secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                 ]]) {
                     sh 'aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_URL'
+                    sh 'aws ecr list-images --region $ECR_REGION'
                 }
                 sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_PROJ_NAME:test1"
                 sh 'pwd && ls -alh'
