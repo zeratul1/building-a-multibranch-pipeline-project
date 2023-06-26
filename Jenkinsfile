@@ -69,6 +69,26 @@ pipeline {
                 sh './jenkins/scripts/test.sh'
             }
         }
+        stage('Query image') {
+            agent {
+                node {
+                    label 'node=Flashwire-staging-agent || node=hkdev-agent-node01'
+                }
+            }
+            when {
+                branch 'development'
+            }
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "$ECR_READ_CREDENTIAL_ID",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    sh 'aws ecr list-images --region $ECR_REGION'
+                }
+            }
+        }
         stage('Get image') {
             agent {
                 node {
