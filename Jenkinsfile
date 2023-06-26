@@ -3,6 +3,31 @@ pipeline {
     environment {
         CI = 'true'
         NPM_CONFIG_CACHE = "${WORKSPACE}/.npm"
+        CHANGED_PROJECTS = ''
+        ECR_URL = '647828570435.dkr.ecr.us-east-1.amazonaws.com'
+        ECR_REGION = 'us-east-1'
+        ECR_READ_CREDENTIAL_ID = 'aws-ecr-credentials-reading-for-frontend'
+        ECR_READ_WRITE_CREDENTIAL_ID = 'aws-ecr-credentials-reading-writing-for-frontend'
+        FLASHWIRE_MOBILE_PROJ_NAME = 'flashwire-mobile'
+    }
+    parameters {
+        booleanParam(
+            name: 'skip_build',
+            defaultValue: false,
+            description: 'Set to true to skip the build stage'
+        )
+        booleanParam(
+            name: 'skip_test',
+            defaultValue: false,
+            description: 'Set to true to skip the test stage'
+        )
+        choice(
+            name: 'image_type', 
+            choices: [
+                'development', 'staging', 'production'
+            ], 
+            description: 'choose the type of image'
+        )
     }
     stages {
         stage('Build') {
@@ -13,7 +38,16 @@ pipeline {
                     args '-p 3000-3100:3000 -p 5000-5100:5000' 
                 }
             }        
+            when {
+                expression {
+                    return params.skip_build !== true
+                }
+            }
+            environment {
+                DOCKER_BUILD_TAG = "${params.image_type}-${BUILD_NUMBER}-${BRANCH_NAME}-${GIT_COMMIT}-${currentBuild.timeInMillis}"
+            }
             steps {
+                sh "echo ${DOCKER_BUILD_TAG}"
                 sh "echo ${WORKSPACE}"
                 sh 'npm install'
             }
@@ -26,8 +60,52 @@ pipeline {
                     args '-p 3000-3100:3000 -p 5000-5100:5000' 
                 }
             }        
+            when {
+                expression {
+                    return params.skip_test !== true
+                }
+            }
             steps {
                 sh './jenkins/scripts/test.sh'
+            }
+        }
+        stage('Get image') {
+            agent {
+                node {
+                    label 'node=Flashwire-staging-agent || node=hkdev-agent-node01'
+                }
+            }
+            when {
+                branch 'production'
+                expression {
+                    return NODE == NODE_NAME
+                }
+            }
+            input {
+                message "Should we continue?"
+                ok "Yes, we should."
+                parameters {
+                    string(
+                        name: 'NODE', 
+                        defaultValue: 'hkdev-agent-node01', 
+                        description: 'Which node should I work on?'
+                    )
+                }
+            }
+            steps {
+                echo "Hello, ${NODE}. [${NODE_NAME}]"
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: "$ECR_READ_CREDENTIAL_ID",
+                    accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                    secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                ]]) {
+                    sh 'aws ecr get-login-password --region $ECR_REGION | docker login --username AWS --password-stdin $ECR_URL'
+                }
+                sh "docker pull $ECR_URL/$FLASHWIRE_MOBILE_PROJ_NAME:test1"
+                sh 'pwd && ls -alh'
+                sh 'uname -a'
+                sh "docker image ls |grep $FLASHWIRE_MOBILE_PROJ_NAME"
             }
         }
         stage('Deliver for development') {
@@ -41,6 +119,19 @@ pipeline {
             when {
                 beforeAgent true
                 branch 'development'
+                expression {
+                    return params.continue_deploy === true
+                }
+            }
+            input {
+                message: 'Continue to deploy?',
+                ok: 'Yes',
+                parameters: [
+                    booleanParam(
+                        name: 'continue_deploy', 
+                        defaultValue: true
+                    )
+                ],
             }
             steps {
                 sh "echo ${WORKSPACE}"
@@ -61,6 +152,19 @@ pipeline {
             when {
                 beforeAgent true
                 branch 'production'
+                expression {
+                    return params.continue_deploy === true
+                }
+            }
+            input {
+                message: 'Continue to deploy?',
+                ok: 'Yes',
+                parameters: [
+                    booleanParam(
+                        name: 'continue_deploy', 
+                        defaultValue: true
+                    )
+                ],
             }
             steps {
                 sh "echo ${WORKSPACE}"
