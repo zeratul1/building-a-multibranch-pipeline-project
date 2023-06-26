@@ -124,14 +124,14 @@ pipeline {
                 }
             }
             input {
-                message: 'Continue to deploy?',
-                ok: 'Yes',
-                parameters: [
+                message 'Continue to deploy?',
+                ok 'Yes',
+                parameters {
                     booleanParam(
                         name: 'continue_deploy', 
                         defaultValue: true
                     )
-                ],
+                },
             }
             steps {
                 sh "echo ${WORKSPACE}"
@@ -157,14 +157,14 @@ pipeline {
                 }
             }
             input {
-                message: 'Continue to deploy?',
-                ok: 'Yes',
-                parameters: [
+                message 'Continue to deploy?',
+                ok 'Yes',
+                parameters {
                     booleanParam(
                         name: 'continue_deploy', 
                         defaultValue: true
                     )
-                ],
+                },
             }
             steps {
                 sh "echo ${WORKSPACE}"
