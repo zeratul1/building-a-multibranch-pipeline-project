@@ -100,6 +100,7 @@ pipeline {
                 ]]) {
                     sh 'aws ecr list-images --region $ECR_REGION --repository-name $FLASHWIRE_MOBILE_REPO_NAME'
                     echo "${buildTag}"
+                    sh 'echo $FLASHWIRE_MOBILE_REPO_NAME:$buildTag'
                 }
             }
         }
