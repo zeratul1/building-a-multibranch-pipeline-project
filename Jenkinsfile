@@ -33,7 +33,9 @@ pipeline {
     }
     stages {
         stage('Prepare') {
-            agent any
+            agent {
+                label 'node=inbound-agent-node01'
+            }
             steps {
                 script {
                     if(params.skip_build) {
@@ -157,24 +159,16 @@ pipeline {
             steps {
                 input(
                     message: 'Continue to deploy?',
-                    ok: 'Submit',
-                    parameters: [
-                        booleanParam(
-                            name: 'continue_deploy', 
-                            defaultValue: true
-                        )
-                    ]
+                    ok: 'Yes',
                 )
                 script {
-                    if(params.continue_deploy) {
-                        echo "${buildTag}"
-                        echo "${WORKSPACE}"
-                        sh 'npm install'
-                        sh './jenkins/scripts/deliver-for-development.sh'
-                        input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                        sh './jenkins/scripts/kill.sh'
-                        return
-                    }
+                    echo "${buildTag}"
+                    echo "${WORKSPACE}"
+                    sh 'npm install'
+                    sh './jenkins/scripts/deliver-for-development.sh'
+                    input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                    sh './jenkins/scripts/kill.sh'
+                    return
                 }
             }
         }
@@ -193,23 +187,15 @@ pipeline {
             steps {
                 input(
                     message: 'Continue to deploy?',
-                    ok: 'Submit',
-                    parameters: [
-                        booleanParam(
-                            name: 'continue_deploy', 
-                            defaultValue: true
-                        )
-                    ]
+                    ok: 'Yes',
                 )
                 script {
-                    if(params.continue_deploy) {
-                        echo "${WORKSPACE}"
-                        sh 'npm install'
-                        sh './jenkins/scripts/deploy-for-production.sh'
-                        input message: 'Finished using the web site? (Click "Proceed" to continue)'
-                        sh './jenkins/scripts/kill.sh'
-                        return
-                    }
+                    echo "${WORKSPACE}"
+                    sh 'npm install'
+                    sh './jenkins/scripts/deploy-for-production.sh'
+                    input message: 'Finished using the web site? (Click "Proceed" to continue)'
+                    sh './jenkins/scripts/kill.sh'
+                    return
                 }
             }
         }
